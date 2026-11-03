@@ -20,6 +20,8 @@
 #if HAL_GCS_ENABLED
 
 #include "GCS.h"
+// AGRI: authority barrier before routing or dispatch.
+#include <AP_Agri/AP_Agri.h>
 
 #include <AC_Fence/AC_Fence.h>
 #include <AP_Compass/AP_Compass.h>
@@ -1726,6 +1728,14 @@ void GCS_MAVLINK::send_message(enum ap_message id)
 void GCS_MAVLINK::packetReceived(const mavlink_status_t &status,
                                  const mavlink_message_t &msg)
 {
+    // AGRI: reject before routing, scripting and handlers.
+#if AP_AGRI_ENABLED
+    AP_Agri *agri = AP_Agri::get_singleton();
+    const bool agri_protected = uartstate && AP_Agri::protected_port(uartstate->idx);
+    if (agri_protected && (!agri || !agri->accept(uartstate->idx, msg))) {
+        return;
+    }
+#endif
     // we exclude radio packets because we historically used this to
     // make it possible to use the CLI over the radio
     if (msg.msgid != MAVLINK_MSG_ID_RADIO && msg.msgid != MAVLINK_MSG_ID_RADIO_STATUS) {
@@ -1741,7 +1751,12 @@ void GCS_MAVLINK::packetReceived(const mavlink_status_t &status,
         // MAVLink2
         _channel_status.flags &= ~MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
     }
-    if (!routing.check_and_forward(*this, msg)) {
+    // AGRI: protected ingress never learns/forwards routes, including HEARTBEAT.
+    if (
+#if AP_AGRI_ENABLED
+        !agri_protected &&
+#endif
+        !routing.check_and_forward(*this, msg)) {
         // the routing code has indicated we should not handle this packet locally
         return;
     }
@@ -1788,7 +1803,11 @@ GCS_MAVLINK::update_receive(uint32_t max_time_us)
         const uint8_t c = (uint8_t)_port->read();
         const uint32_t protocol_timeout = 4000;
         
+        // AGRI: no alternate byte parser on the protected companion UART.
         if (alternative.handler &&
+#if AP_AGRI_ENABLED
+            !(uartstate && AP_Agri::protected_port(uartstate->idx)) &&
+#endif
             now_ms - alternative.last_mavlink_ms > protocol_timeout) {
             /*
               we have an alternative protocol handler installed and we

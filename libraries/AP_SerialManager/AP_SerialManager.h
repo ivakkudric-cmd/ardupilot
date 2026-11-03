@@ -20,6 +20,8 @@
   find which serial port they should use
  */
 #pragma once
+// AGRI: optional project-private UART protocol.
+#include <AP_Agri/AP_Agri_config.h>
 
 #include "AP_SerialManager_config.h"
 #include <AP_Param/AP_Param.h>
@@ -82,6 +84,10 @@ public:
         SerialProtocol_IMUOUT = 46,
         // Reserving Serial Protocol 47 for SerialProtocol_IQ
         SerialProtocol_PPP = 48,
+        // AGRI: 49 is free in Copter-4.5.7; see project ADR0003.
+#if AP_AGRI_ENABLED
+        SerialProtocol_AgriSpray = 49,
+#endif
         SerialProtocol_NumProtocols                    // must be the last value
     };
 

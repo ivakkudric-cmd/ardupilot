@@ -31,6 +31,8 @@ def build(bld):
             'AP_OSD',
             'AC_AutoTune',
             'AP_KDECAN',
+            # AGRI: optional library, compiled out via AP_AGRI_ENABLED.
+            'AP_Agri',
         ],
     )
 

@@ -947,6 +947,10 @@ private:
 
     // system.cpp
     void init_ardupilot() override;
+    // AGRI: bounded 50Hz infrastructure task.
+#if AP_AGRI_ENABLED
+    void agri_update();
+#endif
     void startup_INS_ground();
     bool position_ok() const;
     bool ekf_has_absolute_position() const;

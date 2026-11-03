@@ -50,6 +50,10 @@ void Copter::init_ardupilot()
 
     // setup telem slots with serial ports
     gcs().setup_uarts();
+    // AGRI: serial configuration exists before opening spray link.
+#if AP_AGRI_ENABLED
+    g2.agri.init();
+#endif
 
 #if OSD_ENABLED == ENABLED
     osd.init();

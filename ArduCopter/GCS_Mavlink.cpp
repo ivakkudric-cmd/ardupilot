@@ -625,6 +625,15 @@ bool GCS_MAVLINK_Copter::handle_guided_request(AP_Mission::Mission_Command &cmd)
 void GCS_MAVLINK_Copter::packetReceived(const mavlink_status_t &status,
                                         const mavlink_message_t &msg)
 {
+    // AGRI: avoid ADS-B/Follow consumers before the common authority filter.
+#if AP_AGRI_ENABLED
+    const int8_t agri_serial = AP::serialmanager().find_portnum(
+        AP_SerialManager::SerialProtocol_MAVLink, uint8_t(get_chan() - MAVLINK_COMM_0));
+    if (agri_serial >= 0 && AP_Agri::protected_port(uint8_t(agri_serial))) {
+        GCS_MAVLINK::packetReceived(status, msg);
+        return;
+    }
+#endif
     // we handle these messages here to avoid them being blocked by mavlink routing code
 #if HAL_ADSB_ENABLED
     if (copter.g2.dev_options.get() & DevOptionADSBMAVLink) {

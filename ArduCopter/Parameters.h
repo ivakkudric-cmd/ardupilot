@@ -3,6 +3,8 @@
 #define AP_PARAM_VEHICLE_NAME copter
 
 #include <AP_Common/AP_Common.h>
+// AGRI: configuration and optional parameter subgroup.
+#include <AP_Agri/AP_Agri.h>
 #include "RC_Channel.h"
 #include <AP_Proximity/AP_Proximity.h>
 
@@ -494,6 +496,10 @@ public:
  */
 class ParametersG2 {
 public:
+    // AGRI: source of AGR_ parameters and infrastructure state.
+#if AP_AGRI_ENABLED
+    AP_Agri agri;
+#endif
     ParametersG2(void);
 
     // var_info for holding Parameter information
